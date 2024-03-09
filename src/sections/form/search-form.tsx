@@ -8,9 +8,7 @@ import { m } from 'framer-motion';
 import { Stack } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 // hooks
-import { useRouter } from '@/hooks/routes';
-// utils
-// import { getSearchTrack } from '@/utils/api';
+import { useRouter, usePathname, useSearchParams } from '@/hooks/routes';
 // components
 import { MotionContainer, varFade } from '@/components/animate';
 import FormProvider from '@/components/hook-form/form-provider';
@@ -18,15 +16,25 @@ import RHFTextField from '@/components/hook-form/rhf-textfield';
 
 // ----------------------------------------------------------------------
 
-export default function SearchForm() {
+type Props = {
+  handleAfter?: () => void;
+};
+
+export default function SearchForm({ handleAfter }: Props) {
   const router = useRouter();
+
+  const pathname = usePathname();
+
+  const searchParams = useSearchParams();
+
+  const keyword = searchParams.get('keyword');
 
   const LoginSchema = Yup.object().shape({
     query: Yup.string().required('You must fill the artists / album / title'),
   });
 
   const defaultValues = {
-    query: '',
+    query: keyword ?? '',
   };
 
   const methods = useForm({
@@ -43,28 +51,26 @@ export default function SearchForm() {
   const onSubmit = handleSubmit(async (formValue) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      // const response = getSearchTrack(
-      //   formValue.query,
-      //   'US',
-      //   'musicVideo',
-      //   5,
-      //   0,
-      // );
 
       const searchParams = new URLSearchParams({
         keyword: formValue.query,
         country: 'US',
         entity: 'musicVideo',
-        limit: String(5),
+        limit: String(4),
         offset: String(0),
       }).toString();
 
       const href = `search-result?${searchParams}`;
 
-      router.replace(href);
+      router.push(href);
     } catch (error) {
       console.error(error);
+    } finally {
       reset();
+
+      if (handleAfter) {
+        handleAfter();
+      }
     }
   });
 
@@ -103,7 +109,10 @@ export default function SearchForm() {
             loading={isSubmitting}
             sx={{
               borderRadius: (theme) => theme.spacing(2.5),
-              bgcolor: 'rgba(255,255,255,0.35)',
+              bgcolor:
+                pathname !== '/search-result'
+                  ? 'rgba(255,255,255,0.35)'
+                  : 'linear-gradient(153deg, #712bda, #a45deb 100%)',
               textTransform: 'capitalize',
               fontWeight: 'bold',
               fontSize: (theme) => theme.spacing(2),

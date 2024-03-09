@@ -1,41 +1,100 @@
 'use client';
 
-import * as React from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import Image from 'next/image';
+import { useQuery } from 'react-query';
 // @mui
 import {
-  AppBar,
   Box,
   Link,
   Stack,
-  Toolbar,
   Container,
-  Typography,
   IconButton,
+  CircularProgress,
+  Typography,
 } from '@mui/material';
+// layouts
+import MainLayout from '@/layouts/main-layout';
 // icons
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
-//
+// utils
+import { getSearchTrack } from '@/utils/api';
+// hooks
+import { useRouter, useSearchParams } from '@/hooks/routes';
 import RouterLink from '@/hooks/routes/router-link';
+//
+import CardItem, { Item } from '@/sections/cards/CardItem';
+import DialogSearch from '@/components/dialog-search';
 
 // ----------------------------------------------------------------------
 
-export default function DrawerAppBar() {
+export default function SearchResultView() {
+  const router = useRouter();
+
+  const searchParams = useSearchParams();
+
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
+
+  const query: {
+    keyword: string;
+    country?: string;
+    entity?: string;
+    limit?: number | number[];
+    offset?: number;
+  } = useMemo(
+    () => ({
+      keyword: searchParams.get('keyword') ?? '',
+      limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : 4,
+      offset: searchParams.get('offset')
+        ? Number(searchParams.get('offset'))
+        : 0,
+      country: searchParams.get('country') ?? 'US',
+      entity: searchParams.get('entity') ?? 'musicVideo',
+    }),
+    [searchParams],
+  );
+
+  const { isLoading, data } = useQuery<any | Error>(
+    [query.keyword, query.country, query.entity, query.limit, query.offset],
+    () =>
+      getSearchTrack(
+        query.keyword ?? '',
+        query.country ?? 'US',
+        query.entity ?? 'musicVideo',
+        Number(query.limit) ?? 5,
+        Number(query.offset) ?? 0,
+      ),
+  );
+
+  const loadMore = () => {
+    const newSP = new URLSearchParams({
+      keyword: query.keyword,
+      country: 'US',
+      entity: 'musicVideo',
+      limit: searchParams.get('limit')
+        ? String(Number(searchParams.get('limit')) + 4)
+        : String(4),
+      offset: String(0),
+    }).toString();
+
+    const href = `search-result?${newSP}`;
+
+    router.push(href);
+  };
+
   return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar
-        sx={{
-          backgroundImage: 'linear-gradient(100deg, #712bda, #a45deb 100%)',
-          boxShadow: '0 0 6px 0 rgba(148, 77, 230, 0.75) !important',
-          maxWidth: 400,
-          mx: 'auto',
-          top: 0,
-          left: 0,
-          right: 0,
-        }}
-      >
-        <Toolbar>
+    <MainLayout>
+      <Container maxWidth="xs">
+        <Box
+          sx={{
+            backgroundImage: 'linear-gradient(100deg, #712bda, #a45deb 100%)',
+            boxShadow: '0 0 6px 0 rgba(148, 77, 230, 0.75) !important',
+            color: (theme) => theme.palette.primary.contrastText,
+            py: 1,
+            px: 0.5,
+          }}
+        >
           <Stack
             direction="row"
             spacing={2}
@@ -52,8 +111,8 @@ export default function DrawerAppBar() {
               <Image
                 src="/ngmusic.svg"
                 alt="ngmusic_logo_text"
-                width={80}
-                height={20}
+                width={75}
+                height={15}
                 style={{
                   margin: 'auto',
                 }}
@@ -62,63 +121,67 @@ export default function DrawerAppBar() {
               />
             </Link>
 
-            <IconButton size="medium" edge="start" color="inherit">
+            <IconButton
+              size="medium"
+              edge="start"
+              color="inherit"
+              onClick={() => setOpenDialog(true)}
+            >
               <SearchIcon />
             </IconButton>
           </Stack>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="xs">
+        </Box>
         <Box
           component="main"
           sx={{
-            p: 3,
+            px: 3,
+            py: 4,
             border: '1px solid rgba(148, 77, 230, 0.45)',
             bgcolor: '#f8fafc',
+            minHeight: '93vh',
           }}
         >
-          <Toolbar />
-          <Typography>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Similique
-            unde fugit veniam eius, perspiciatis sunt? Corporis qui ducimus
-            quibusdam, aliquam dolore excepturi quae. Distinctio enim at
-            eligendi perferendis in cum quibusdam sed quae, accusantium et
-            aperiam? Quod itaque exercitationem, at ab sequi qui modi delectus
-            quia corrupti alias distinctio nostrum. Minima ex dolor modi
-            inventore sapiente necessitatibus aliquam fuga et. Sed numquam
-            quibusdam at officia sapiente porro maxime corrupti perspiciatis
-            asperiores, exercitationem eius nostrum consequuntur iure aliquam
-            itaque, assumenda et! Quibusdam temporibus beatae doloremque
-            voluptatum doloribus soluta accusamus porro reprehenderit eos
-            inventore facere, fugit, molestiae ab officiis illo voluptates
-            recusandae. Vel dolor nobis eius, ratione atque soluta, aliquam
-            fugit qui iste architecto perspiciatis. Nobis, voluptatem! Cumque,
-            eligendi unde aliquid minus quis sit debitis obcaecati error,
-            delectus quo eius exercitationem tempore. Delectus sapiente,
-            provident corporis dolorum quibusdam aut beatae repellendus est
-            labore quisquam praesentium repudiandae non vel laboriosam quo ab
-            perferendis velit ipsa deleniti modi! Ipsam, illo quod. Nesciunt
-            commodi nihil corrupti cum non fugiat praesentium doloremque
-            architecto laborum aliquid. Quae, maxime recusandae? Eveniet dolore
-            molestiae dicta blanditiis est expedita eius debitis cupiditate
-            porro sed aspernatur quidem, repellat nihil quasi praesentium quia
-            eos, quibusdam provident. Incidunt tempore vel placeat voluptate
-            iure labore, repellendus beatae quia unde est aliquid dolor
-            molestias libero. Reiciendis similique exercitationem consequatur,
-            nobis placeat illo laudantium! Enim perferendis nulla soluta magni
-            error, provident repellat similique cupiditate ipsam, et tempore
-            cumque quod! Qui, iure suscipit tempora unde rerum autem saepe nisi
-            vel cupiditate iusto. Illum, corrupti? Fugiat quidem accusantium
-            nulla. Aliquid inventore commodi reprehenderit rerum reiciendis!
-            Quidem alias repudiandae eaque eveniet cumque nihil aliquam in
-            expedita, impedit quas ipsum nesciunt ipsa ullam consequuntur
-            dignissimos numquam at nisi porro a, quaerat rem repellendus.
-            Voluptates perspiciatis, in pariatur impedit, nam facilis libero
-            dolorem dolores sunt inventore perferendis, aut sapiente modi
-            nesciunt.
-          </Typography>
+          {isLoading ? (
+            <Stack alignItems="center" justifyContent="center">
+              <CircularProgress />
+            </Stack>
+          ) : data ? (
+            <>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 4,
+                }}
+              >
+                <Typography variant="body1">Search result for:</Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 'bold',
+                    color: (theme) => theme.palette.primary.main,
+                  }}
+                >
+                  {query.keyword !== '' ? query.keyword : '-'}
+                </Typography>
+              </Box>
+              <CardItem
+                data={data.data.results as Item[]}
+                loading={isLoading}
+                handleLoadMore={loadMore}
+              />
+            </>
+          ) : null}
         </Box>
       </Container>
-    </Box>
+
+      <DialogSearch
+        open={openDialog}
+        handleClose={() => setOpenDialog(false)}
+      />
+    </MainLayout>
   );
 }
