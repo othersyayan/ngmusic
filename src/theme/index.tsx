@@ -7,6 +7,7 @@ import {
   ThemeOptions,
   ThemeProvider as MuiThemeProvider,
 } from '@mui/material/styles';
+import { Suspense } from 'react';
 
 // ----------------------------------------------------------------------
 
@@ -31,8 +32,10 @@ export default function ThemeProvider({ children }: Props) {
   return (
     <QueryClientProvider client={queryClient}>
       <MuiThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
+        <Suspense>
+          <CssBaseline />
+          {children}
+        </Suspense>
       </MuiThemeProvider>
     </QueryClientProvider>
   );
